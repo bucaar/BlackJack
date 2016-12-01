@@ -36,8 +36,8 @@ public class PlayerTest {
     
     @Before
     public void setUp() {
-        player1 = new Player(p1N, p1ID);
-        player2 = new Player(p2N, p2ID);
+        player1 = new Player(p1N, null);
+        player2 = new Player(p2N, null);
     }
     
     @After
@@ -72,16 +72,6 @@ public class PlayerTest {
         System.out.println("getMoney");
         assertEquals(100, player1.getMoney());
         assertEquals(100, player2.getMoney());
-    }
-
-    /**
-     * Test of getId method, of class Player.
-     */
-    @Test
-    public void testGetId() {
-        System.out.println("getId");
-        assertEquals(p1ID, player1.getId());
-        assertEquals(p2ID, player2.getId());
     }
 
     /**
