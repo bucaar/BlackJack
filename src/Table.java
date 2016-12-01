@@ -100,13 +100,103 @@ class Table {
      * @return true if dealer has a blackjack, otherwise false.
      */
     public boolean checkDealer(){
+        int[] insurance = new int[table.length];
         //if the dealer is showing an ace
         if(dealer.isFirstAce()){
-            //TODO: offer insurance.
-            System.out.println("Insurance?");
-            //TODO: if any hands have a blackjack, offer even money.
-            System.out.println("Any players with blackjack, even money?");
+            String[] decisions = new String[table.length];
+            
+            //Offer insurance/even money.
+            for(int seat=0;seat<table.length;seat++){
+                Player p = table[seat];
+                //skip empty seats, empty hands, or hands with no wagers.
+                //note: there will only be one hand at this point.
+                if(p == null || hands[seat].isEmpty() || hands[seat].get(0).getWager() == 0){
+                    continue;
+                }
+                //if player has a blackjack, offer even money
+                if(hands[seat].get(0).getValue() == 21){
+                    p.writeString("E");
+                }
+                //otherwise, offer insurance
+                else{
+                    p.writeString("I");
+                }
+            }
+            
+            //Wait for all responses
+            //TODO: Time limit?
+            boolean allResponses = true;
+            do{
+                for(int seat=0;seat<table.length;seat++){
+                    Player player = table[seat];
+                    //skip empty seats, empty hands, or hands with no wagers.
+                    //note: there will only be one hand at this point.
+                    if(player == null || hands[seat].isEmpty() || hands[seat].get(0).getWager() == 0){
+                        continue;
+                    }
+                    if(decisions[seat] == null){
+                        decisions[seat] = player.readString();
+                    }
+                    if(decisions[seat] == null){
+                        allResponses = false;
+                    }
+                }
+            }while(!allResponses);
+            
+            //process players decisions
+            for(int seat=0;seat<table.length;seat++){
+                Player player = table[seat];
+                //skip empty seats, empty hands, or hands with no wagers.
+                //note: there will only be one hand at this point.
+                if(player == null || hands[seat].isEmpty() || hands[seat].get(0).getWager() == 0){
+                    continue;
+                }
+                //read from the player
+                String in = decisions[seat];
+                char decision = player.readString().charAt(0);
+                if(in.length() > 2){
+                    in = in.substring(2);
+                }
+                //if they've accepted even money
+                if(decision == 'E'){
+                    //they must have a blackjack for this.
+                    if(hands[seat].get(0).getWager() == 21){
+                        //pay even money, discard hand.
+                        player.giveMoney((int)(hands[seat].get(0).getWager() * 2));
+                        clearHands(seat);
+                        player.writeString("Y Paid even money.");
+                    }
+                    //and if they dont,
+                    else{
+                        player.writeString("N You do not have a blackjack.");
+                    }
+                }
+                //if theyve acccepted insurance
+                else if(decision == 'I'){
+                    try{
+                        //see how much they gave
+                        int amount = Integer.parseInt(in);
+                        int wager = hands[seat].get(0).getWager();
+                        if(amount > wager / 2){
+                            amount = wager / 2;
+                            player.writeString("N Cannot buy that much insurance. Limit is 1/2 wager.");
+                        }
+                        insurance[seat] = amount;
+                        player.takeMoney(amount);
+                        player.writeString("Y Insurance bought for " + amount);
+                    }
+                    catch(NumberFormatException e){
+                        player.writeString("N You provided an invalid wager format (" + in + ").");
+                    }
+                }
+                //or they declined
+                else if(decision == 'N'){
+                    //shouldn't have to do anything at all.
+                    player.writeString("Y Declined.");
+                }
+            }
         }
+        
         //if the dealer is not showing a 10 card, then he doesn't have anything
         else if(!dealer.isFirstTen()){
             return false;
@@ -114,10 +204,38 @@ class Table {
         
         //if we haven't returned yet, we should check his hand for a 21.
         if(dealer.getValue() == 21){
-            //TODO: pay out insurance bets
+            //tell players dealer has blackjack
+            broadcastToTable("D");
+            for(int seat=0;seat<table.length;seat++){
+                Player player = table[seat];
+                //skip empty seats, empty hands, or hands with no wagers.
+                //note: there will only be one hand at this point.
+                if(player == null || hands[seat].isEmpty() || hands[seat].get(0).getWager() == 0){
+                    continue;
+                }
+                //if the player bought insurance
+                if(insurance[seat] > 0){
+                    //pay him
+                    player.giveMoney(insurance[seat] * 2);
+                    player.writeString("Y Insurance paid!");
+                }
+            }
             return true;
         }
-        //TODO: lose insurance bets
+        //lose insurance bets.
+        for(int seat=0;seat<table.length;seat++){
+            Player player = table[seat];
+            //skip empty seats, empty hands, or hands with no wagers.
+            //note: there will only be one hand at this point.
+            if(player == null || hands[seat].isEmpty() || hands[seat].get(0).getWager() == 0){
+                continue;
+            }
+            //if the player bought insurance
+            if(insurance[seat] > 0){
+                //notify he lost his insurance.
+                player.writeString("Y Insurance lost");
+            }
+        }
         return false;
     }
     
@@ -127,25 +245,23 @@ class Table {
      * 
      */
     public void playSeat(int seat){
-        //if there is no hand here, return false
-        if(hands[seat] == null || hands[seat].isEmpty()){
+        //if there is no hand here or the player isnt active, return
+        if(hands[seat] == null || hands[seat].isEmpty() || !table[seat].isActive()){
             return;
         }
         
+        //store the player for easy referencing.
         Player player = table[seat];
-        
         
         //loop through every hand of this player
         for(int h=0;h<hands[seat].size();h++){
-            
-        
             //store the hand for easy referencing
             Hand hand = hands[seat].get(h);
             
-            //if the first hand is a blackjack, return true (no input needed)
+            //if the first hand is a blackjack, return (no input needed)
             if(h == 0 && hand.getValue() == 21){
-                //TODO: tell player they recieved a blackjack
-                player.writeString("[BJ] Wager: " + hand.getWager() + ", Hand " + h + ": " + hand.toString());
+                //notify player they recieved a blackjack
+                player.writeString("B");
                 //pay out the black jack 3:2
                 player.giveMoney((int)(hand.getWager() * 2.5));
                 clearHands(seat);
@@ -154,66 +270,99 @@ class Table {
             
             //question loop
             while(hand.getValue() <= 21){
-                //deal a card if they only have one card (happens from splitting)
+                //deal a card if they only have one card (happens from splitting cards)
                 if(hand.size() == 1){
                     hand.addCard(shoe.deal());
                 }
                 
                 //TODO: notify player it is their turn and which hand
-                player.writeString("It is your (" + table[seat].getUsername() + ") turn. (hand " + (h+1) + "/" + hands[seat].size() + ").");
-        
-                
-                //TODO: ask player what they want to do
-                player.writeString(tableAsString(true));
-                player.writeString("Action? (H, S, D, P)");
-                char option = player.readString().toUpperCase().charAt(0);
+                player.writeString("G");
+                //wait for input.
+                String in;
+                do{
+                    in = player.readString();
+                }while(in == null);
+                char option = in.charAt(0);
+                if(in.length() > 2){
+                    in = in.substring(2);
+                }
+                else{
+                    in = "";
+                }
                 
                 //player hits
                 if(option == 'H'){
                     hand.addCard(shoe.deal());
+                    player.writeString("Y You received a card");
                 }
                 //player stays
-                else if(option == 'S'){
+                else if(option == 'T'){
+                    player.writeString("Y You stay");
                     break;
                 }
                 //player doubles (only on first two cards)
                 else if(option == 'D'){
-                    if(hand.size() == 2 && player.getMoney() >= hand.getWager()){
-                        player.takeMoney(hand.getWager());
-                        hand.setWager(hand.getWager() * 2);
+                    //assume they want to double full.
+                    int amount = hand.getWager();
+                    try{
+                        //if they provided something, then try to read it.
+                        if(in.length() > 0){
+                            amount = Integer.parseInt(in);
+                        }
+                    }
+                    catch(NumberFormatException e){
+                        player.writeString("N You provided an invalid wager format (" + in + ").");
+                    }
+                    
+                    //if they have two cards and they can afford it,
+                    if(hand.size() == 2 && player.getMoney() >= amount){
+                        player.takeMoney(amount);
+                        hand.setWager(hand.getWager() + amount);
                         hand.addCard(shoe.deal());
+                        player.writeString("Y you double down for (" + amount + ").");
                         break;
                     }
+                    //otherwise
                     else{
-                        //TODO they cannot do this.
-                        player.writeString("You cannot double down.");
+                        player.writeString("N You cannot double down for (" + amount + ") right now.");
                     }
                 }
                 //player splits (only on first two cards) and he has enough money
                 else if(option == 'P'){
-                    if(hand.canSplit() && player.getMoney() >= hand.getWager()){
+                    //assume they want to split full.
+                    int amount = hand.getWager();
+                    try{
+                        //if they provided something, then try to read it.
+                        if(in.length() > 0){
+                            amount = Integer.parseInt(in);
+                        }
+                    }
+                    catch(NumberFormatException e){
+                        player.writeString("N You provided an invalid wager format (" + in + ").");
+                    }
+                    
+                    //if they can split and they can afford it
+                    if(hand.canSplit() && player.getMoney() >= amount){
                         Card splitCard = hand.removeFirstCard();
                         Hand newHand = new Hand();
                         newHand.addCard(splitCard);
                         newHand.setWager(hand.getWager());
                         player.takeMoney(hand.getWager());
                         hands[seat].add(newHand);
+                        player.writeString("Y you split for (" + amount + ")");
                     }
+                    //otherwise
                     else{
-                        //TODO they cannot do this
-                        player.writeString("You cannot split");
+                        player.writeString("N You cannot split for (" + amount + ") right now.");
                     }
                 }
             }
-            //TODO notify player their hand is completed.
-            player.writeString("[DONE] Hand " + (h+1) + ": " + hand.toString());
             //check to see if they busted.
             if(hand.getValue() > 21){
                 //they lose this hand and make sure we do not skip their next hand after deleting
-                //TODO notify player that their hand busted
-                player.writeString("Your hand busted!");
                 hands[seat].remove(h);
                 h--;
+                player.writeString("O");
             }
         }
     }
@@ -310,6 +459,18 @@ class Table {
         hands[seat] = null;
     }
     
+    public void broadcastToTable(String message){
+        for(int i=0;i<table.length;i++){
+            if(table[i] != null){
+                table[i].writeString(message);
+            }
+        }
+    }
+    
+    public void broadcastToLobby(String message){
+        //TODO implement lobby
+    }
+    
     /**
      * 
      * @return The string representation of this table.
@@ -334,7 +495,7 @@ class Table {
                 }
             }
             
-            //new line for next player.
+            //new line for next player (if there is one).
             if(s < table.length-1){
                 out.append("\n");
             }
