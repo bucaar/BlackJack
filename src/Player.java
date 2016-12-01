@@ -1,20 +1,21 @@
-
-import java.util.Scanner;
-
-
 class Player {
     private String username;
     private int id;
-    private int money = 100;
+    private int money;
+    
+    private Client client;
     
     /**
      * The constructor for Player
      * @param username the player's username
      * @param id the player's id
      */
-    public Player(String username, int id) {
+    public Player(String username, int id, Client client) {
         this.username = username;
         this.id = id;
+        this.client = client;
+        
+        this.money = 100;
     }
 
     /**
@@ -50,6 +51,14 @@ class Player {
     }
     
     /**
+     * 
+     * @return whether or not the socket connection is active
+     */
+    public boolean isActive(){
+        return client.active();
+    }
+    
+    /**
      * Increases the amount of money the player owns
      * @param money the amount to increase by
      */
@@ -65,12 +74,24 @@ class Player {
         return username;
     }
     
+    /**
+     * Writes the string with an attached EOL for easy reading.
+     * @param out The string to write to the client
+     */
     public void writeString(String out){
-        System.out.println(out);
+        if(isActive()){
+            client.write(out + BlackJackDemo.EOL);
+        }
     }
     
-    private Scanner scan = new Scanner(System.in);
+    /**
+     * Reads from the client until the EOL character is found.
+     * @return The string read from the client, null if none found.
+     */
     public String readString(){
-        return scan.nextLine();
+        if(isActive()){
+            return client.readStringUntil(BlackJackDemo.EOL);
+        }
+        return null;
     }
 }

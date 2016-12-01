@@ -10,7 +10,7 @@
  * @author Aaron
  */
 public class BlackJackDemo {
-
+    public static final char EOL = '\n';
     /**
      * @param args the command line arguments
      */
