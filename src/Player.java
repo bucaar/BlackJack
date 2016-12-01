@@ -45,6 +45,9 @@ class Player {
      * @return whether or not the socket connection is active
      */
     public boolean isActive(){
+        if(client == null){
+            return false;
+        }
         return client.active();
     }
     
@@ -88,7 +91,7 @@ class Player {
      */
     public String readString(){
         if(isActive()){
-            return client.readStringUntil(BlackJackDemo.EOL);
+            return client.readStringUntil(BlackJackDemo.EOL).trim();
         }
         return null;
     }
