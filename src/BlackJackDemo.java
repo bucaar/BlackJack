@@ -11,6 +11,8 @@
  */
 public class BlackJackDemo {
     public static final char EOL = '\n';
+    //TODO: Start making the lobby!
+    
     /**
      * @param args the command line arguments
      */
