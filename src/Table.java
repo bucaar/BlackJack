@@ -141,6 +141,7 @@ class Table {
                         allResponses = false;
                     }
                 }
+                //TODO: Add delay to not waste CPU
             }while(!allResponses);
             
             //process players decisions
@@ -275,12 +276,13 @@ class Table {
                     hand.addCard(shoe.deal());
                 }
                 
-                //TODO: notify player it is their turn and which hand
+                //Notify player it is their turn
                 player.writeString("G");
                 //wait for input.
                 String in;
                 do{
                     in = player.readString();
+                    //TODO: add delay to not waste CPU.
                 }while(in == null);
                 char option = in.charAt(0);
                 if(in.length() > 2){
@@ -373,18 +375,11 @@ class Table {
      */
     public boolean playDealer(){
         //dealer will hit to a hard 17
-        while(dealer.getValue() <= 17){
-            //if it is a hard 17, then break.
-            if(dealer.getValue() == 17 && !dealer.isSoft()){
-                break;
-            }
+        while(dealer.getValue() < 17 || 
+                (dealer.getValue() == 17 && dealer.isSoft())){
             //the dealer needs to hit.
-            System.out.println("Dealer hits!");
             dealer.addCard(shoe.deal());
-            System.out.println(this.tableAsString(false));
         }
-        System.out.println("Dealer finished!");
-        System.out.println(this.tableAsString(false));
         return dealer.getValue() > 21;
     }
     
@@ -408,26 +403,32 @@ class Table {
                     if(hand.getValue() > 21){
                         //do not pay.
                         System.out.println("THIS SHOULDNT HAPPEN: Player bust");
+                        //make fun of Aaron.
+                        player.writeString("N The programmer is a horrible person for making this message show up.");
                     }
                     //did the dealer bust?
                     else if(dealer.getValue() > 21){
-                        //TODO notify player of win
+                        //Notify player of win
                         player.giveMoney(hand.getWager() * 2);
+                        player.writeString("W");
                     }
                     //did the player beat the dealer?
                     else if(hand.getValue() > dealer.getValue()){
-                        //TODO notify player of win
+                        //Notify player of win
                         player.giveMoney(hand.getWager() * 2);
+                        player.writeString("W");
                     }
                     //did the player push?
                     else if(hand.getValue() == dealer.getValue()){
+                        //Notify player of push
                         player.giveMoney(hand.getWager());
+                        player.writeString("P");
                     }
                     //no? lose.
                     else{
-                        //TODO notify player of loss
+                        //Notify player of loss
                         //the dealer beat the player
-                        //no need to do anything
+                        player.writeString("L");
                     }
                 }
             }
