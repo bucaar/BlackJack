@@ -216,7 +216,7 @@ public class Server implements Runnable {
                     //If the client has data make sure lastAvailable
                     //doesn't end up skipping the next client
                     which--;
-          //fall through to allow data from dead clients
+                    //fall through to allow data from dead clients
                     //to be retreived.
                 }
                 if (client.available() > 0) {

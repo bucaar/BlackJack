@@ -1,6 +1,5 @@
 class Player {
     private String username;
-    private int id;
     private int money;
     
     private Client client;
@@ -10,9 +9,8 @@ class Player {
      * @param username the player's username
      * @param id the player's id
      */
-    public Player(String username, int id, Client client) {
+    public Player(String username, Client client) {
         this.username = username;
-        this.id = id;
         this.client = client;
         
         this.money = 100;
@@ -24,14 +22,6 @@ class Player {
      */
     public String getUsername() {
         return username;
-    }
-    
-    /**
-     * 
-     * @return the id for the player
-     */
-    public int getId(){
-        return id;
     }
 
     /**
@@ -75,6 +65,14 @@ class Player {
     }
     
     /**
+     * 
+     * @return the associated client for this player.
+     */
+    public Client getClient(){
+        return client;
+    }
+    
+    /**
      * Writes the string with an attached EOL for easy reading.
      * @param out The string to write to the client
      */
@@ -93,5 +91,14 @@ class Player {
             return client.readStringUntil(BlackJackDemo.EOL);
         }
         return null;
+    }
+    
+    public boolean equals(Object o){
+        if(!(o instanceof Player)){
+            return false;
+        }
+        
+        Player p = (Player) o;
+        return this.getUsername().equals(p.getUsername()) && this.getClient() == p.getClient();
     }
 }

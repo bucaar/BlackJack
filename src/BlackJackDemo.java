@@ -17,7 +17,7 @@ public class BlackJackDemo {
     public static void main(String[] args) {
         // TODO code application logic here
         Table t = new Table(1, 6);
-        Player p = new Player("Joe", 123);
+        Player p = new Player("Joe",);
         t.seatPlayer(p, 0);
         
         while(true){

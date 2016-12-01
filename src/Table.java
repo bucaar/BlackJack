@@ -1,5 +1,4 @@
 import java.util.ArrayList;
-import java.util.Scanner;
 
 class Table {
     private Player[] table;
@@ -139,8 +138,6 @@ class Table {
         //loop through every hand of this player
         for(int h=0;h<hands[seat].size();h++){
             
-            //TODO: notify player it is their turn and which hand
-            player.writeString("It is your (" + table[seat].getUsername() + ") turn. (hand " + (h+1) + "/" + hands[seat].size() + ").");
         
             //store the hand for easy referencing
             Hand hand = hands[seat].get(h);
@@ -161,6 +158,10 @@ class Table {
                 if(hand.size() == 1){
                     hand.addCard(shoe.deal());
                 }
+                
+                //TODO: notify player it is their turn and which hand
+                player.writeString("It is your (" + table[seat].getUsername() + ") turn. (hand " + (h+1) + "/" + hands[seat].size() + ").");
+        
                 
                 //TODO: ask player what they want to do
                 player.writeString(tableAsString(true));
@@ -248,12 +249,12 @@ class Table {
             //if there is a player here that has hands
             if(table[seat] != null && hands[seat] != null
                     && !hands[seat].isEmpty()){
+                //capture the player for payments
+                Player player = table[seat];
                 //for every hand at this seat
                 for(int h=0;h<hands[seat].size();h++){
                     //capture the hand for referencing
-                    Player player = table[seat];
                     Hand hand = hands[seat].get(h);
-                    
                     //did the player bust?
                     if(hand.getValue() > 21){
                         //do not pay.
@@ -261,10 +262,12 @@ class Table {
                     }
                     //did the dealer bust?
                     else if(dealer.getValue() > 21){
+                        //TODO notify player of win
                         player.giveMoney(hand.getWager() * 2);
                     }
                     //did the player beat the dealer?
                     else if(hand.getValue() > dealer.getValue()){
+                        //TODO notify player of win
                         player.giveMoney(hand.getWager() * 2);
                     }
                     //did the player push?
@@ -273,6 +276,7 @@ class Table {
                     }
                     //no? lose.
                     else{
+                        //TODO notify player of loss
                         //the dealer beat the player
                         //no need to do anything
                     }
