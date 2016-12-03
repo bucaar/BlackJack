@@ -362,7 +362,7 @@ class Table {
                     }
                     
                     //if they have two cards and they can afford it,
-                    if(hand.size() == 2 && player.getMoney() >= amount){
+                    if(hand.size() == 2 && player.getMoney() >= amount && amount <= hand.getWager()){
                         player.takeMoney(amount);
                         hand.setWager(hand.getWager() + amount);
                         hand.addCard(shoe.deal());
@@ -389,7 +389,7 @@ class Table {
                     }
                     
                     //if they can split and they can afford it
-                    if(hand.canSplit() && player.getMoney() >= amount){
+                    if(hand.canSplit() && player.getMoney() >= amount && amount <= hand.getWager()){
                         Card splitCard = hand.removeFirstCard();
                         Hand newHand = new Hand();
                         newHand.addCard(splitCard);
