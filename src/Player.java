@@ -91,17 +91,27 @@ class Player {
      */
     public String readString(){
         if(isActive()){
-            return client.readStringUntil(BlackJackDemo.EOL).trim();
+            String in =  client.readStringUntil(BlackJackDemo.EOL);
+            if(in != null){
+                return in.trim();
+            }
         }
         return null;
     }
     
+    /**
+     * 
+     * @param o The object to compare to
+     * @return true if the this has the same client as o, or if o is the client of this.
+     */
     public boolean equals(Object o){
-        if(!(o instanceof Player)){
-            return false;
+        if(o instanceof Player){
+            Player p = (Player) o;
+            return this.getClient() == p.getClient();
         }
         
-        Player p = (Player) o;
-        return this.getUsername().equals(p.getUsername()) && this.getClient() == p.getClient();
+        return false;
+        
+        
     }
 }

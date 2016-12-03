@@ -39,6 +39,20 @@ class Table {
     }
     
     /**
+     * Searches the table for the given player
+     * @param client The client to search for
+     * @return the associated player, null if none.
+     */
+    public Player getPlayer(Client client){
+        for(int seat=0;seat<table.length;seat++){
+            if(table[seat] != null && table[seat].getClient() == client){
+                return table[seat];
+            }
+        }
+        return null;
+    }
+    
+    /**
      * A method for a player to place a wager on their hand.
      * @param player The player that is making the wager
      * @param seat The seat that the player is sitting at
@@ -66,6 +80,28 @@ class Table {
         player.takeMoney(wager);
         hands[seat].get(0).setWager(wager);
         return true;
+    }
+    
+    /**
+     * 
+     * @return whether or not every sat player has a wager
+     */
+    public boolean readyToDeal(){
+        boolean ready = true;
+        boolean anyone = false;
+        for(int seat=0;seat<table.length;seat++){
+            //if there is someone here
+            if(table[seat] != null){
+                //there is someone sitting
+                anyone = true;
+                //if they don't have a wager, they arent ready.
+                if(hands[seat].size() == 1 && hands[seat].get(0).getWager() == 0){
+                    ready = false;
+                }
+            }
+        }
+        //we are ready if there is anone and everyone is ready
+        return anyone && ready;
     }
     
     /**
@@ -241,6 +277,14 @@ class Table {
     }
     
     /**
+     * This method will handle all communication to complete all of the seats
+     */
+    public void playSeats(){
+        for(int seat=0;seat<table.length;seat++){
+            playSeat(seat);
+        }
+    }
+    /**
      * This method will handle all communication to complete the seat
      * @param seat the seat to play
      * 
@@ -275,7 +319,8 @@ class Table {
                 if(hand.size() == 1){
                     hand.addCard(shoe.deal());
                 }
-                
+                System.out.println("\n");
+                System.out.println(tableAsString(true));
                 //Notify player it is their turn
                 player.writeString("G");
                 //wait for input.
@@ -283,7 +328,7 @@ class Table {
                 do{
                     in = player.readString();
                     //TODO: add delay to not waste CPU.
-                }while(in == null);
+                }while(in == null || in.isEmpty());
                 char option = in.charAt(0);
                 if(in.length() > 2){
                     in = in.substring(2);
@@ -366,6 +411,9 @@ class Table {
                 h--;
                 player.writeString("O");
             }
+            
+            System.out.println("\n");
+            System.out.println(tableAsString(true));
         }
     }
     
@@ -379,6 +427,11 @@ class Table {
                 (dealer.getValue() == 17 && dealer.isSoft())){
             //the dealer needs to hit.
             dealer.addCard(shoe.deal());
+        }
+        System.out.println("\n");
+        System.out.println(tableAsString(false));
+        if(dealer.getValue() > 21){
+            broadcastToTable("K");
         }
         return dealer.getValue() > 21;
     }
@@ -443,6 +496,17 @@ class Table {
     }
     
     /**
+     * This method clears all of the player's hands.
+     */
+    public void clearHands(){
+        for(int seat=0;seat<table.length;seat++){
+            if(table[seat] != null){
+                clearHands(seat);
+            }
+        }
+    }
+    
+    /**
      * This method clears the hand at the specified seat
      * @param seat the seat to be cleared
      */
@@ -453,11 +517,31 @@ class Table {
     
     /**
      * This method opens a seat on the table
-     * @param seat the seat to open
+     * @param client the client to leave
+     * @return The player that was cleared.
      */
-    public void leaveSeat(int seat){
-        table[seat] = null;
-        hands[seat] = null;
+    public void leaveSeat(Client client){
+        for(int seat = 0;seat<table.length;seat++){
+            if(table[seat] != null && table[seat].getClient() == client){
+                table[seat] = null;
+                hands[seat] = null;
+                break;
+            }
+        }
+    }
+    
+    /**
+     * Searches the table for the given client
+     * @param client the client to search for
+     * @return the seat number of the client, -1 otherwise
+     */
+    public int getSeat(Client client){
+        for(int seat = 0;seat<table.length;seat++){
+            if(table[seat] != null && table[seat].getClient() == client){
+                return seat;
+            }
+        }
+        return -1;
     }
     
     public void broadcastToTable(String message){
@@ -468,8 +552,25 @@ class Table {
         }
     }
     
-    public void broadcastToLobby(String message){
-        //TODO implement lobby
+    public String serverSeatOptions(){
+        String out = "";
+        //go through every seat
+        for(int seat=0;seat<table.length;seat++){
+            //if this isn't the first seat, use a semicolon to separate.
+            if(seat > 0){
+                out += ";";
+            }
+            //output the seat number and a space
+            out += seat + " ";
+            //output O for open, username for taken.
+            if(table[seat] == null){
+                out += "O";
+            }
+            else{
+                out += table[seat].getUsername();
+            }
+        }
+        return out;
     }
     
     /**
