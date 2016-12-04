@@ -1,8 +1,14 @@
 
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import javax.imageio.ImageIO;
+
+
 class Deck {
 
-    private static String faces = "A23456789TJQK";
-    private static String suits = "DHCS";
+    public static final String faces = "A23456789TJQK";
+    public static final String suits = "DHCS";
 
     private Card[] cards;
     private int position = 0;
@@ -14,11 +20,20 @@ class Deck {
      */
     public Deck(int decks) {
         cards = new Card[52 * decks];
+        BufferedImage[] images = new BufferedImage[52];
         int i = 0;
         for (int d = 0; d < decks; d++) {
-            for (int f = 0; f < faces.length(); f++) {
-                for (int s = 0; s < suits.length(); s++) {
-                    cards[i++] = new Card(faces.substring(f, f + 1), suits.substring(s, s + 1));
+            int c = 0;
+            for (char f : faces.toCharArray()) {
+                for (char s : suits.toCharArray()) {
+                    if(images[c] == null){
+                        try{
+                            images[c] = ImageIO.read(new File("C:\\Users\\Aaron\\Documents\\NetBeansProjects\\BlackJackDemo\\src\\images\\" + f + s + ".png"));
+                        }
+                        catch(IOException e){}
+                    }
+                    cards[i++] = new Card("" + f, "" + s, images[c]);
+                    c++;
                 }
             }
         }
