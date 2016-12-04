@@ -1,18 +1,23 @@
 
+import java.awt.image.BufferedImage;
+
+
 class Card {
     private String face;
     private String suit;
     private int value;
-
+    private BufferedImage image;
     /**
      * The constructor for a card
      * @param face A one character string of the face (A,5,T,J,Q,K)
      * @param suit A one character string of the suit (C,H,D,S)
      */
-    public Card(String face, String suit) {
+    public Card(String face, String suit, BufferedImage image) {
         this.face = face;
         this.suit = suit;
         calculateValue();
+        
+        this.image = image;
     }
     
     /**
@@ -75,6 +80,10 @@ class Card {
      */
     public boolean isTen() {
         return value == 10;
+    }
+    
+    public BufferedImage getImage(){
+        return image;
     }
 
     /**
