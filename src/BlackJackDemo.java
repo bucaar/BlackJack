@@ -29,7 +29,7 @@ public class BlackJackDemo {
     public BlackJackDemo(){
         this.server = new Server(4949);
         this.table = new Table(3, 6);
-        this.lobby = new ArrayList<Player>();
+        this.lobby = new ArrayList<>();
     }
     
     public void start(){
@@ -46,6 +46,16 @@ public class BlackJackDemo {
                     System.out.println(table.tableAsString(true));
                 }
             }
+            
+            //ensure all players are still connected.
+            for(int i=0;i<lobby.size();i++){
+                if(!lobby.get(i).isActive()){
+                    //remove and don't skip the next person
+                    lobby.remove(i);
+                    i--;
+                }
+            }
+            table.removeDisconnected();
             
             //see if table is ready to deal
             if(table.readyToDeal()){

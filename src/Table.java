@@ -161,8 +161,9 @@ class Table {
             
             //Wait for all responses
             //TODO: Time limit?
-            boolean allResponses = true;
+            boolean allResponses;
             do{
+                allResponses = true;
                 for(int seat=0;seat<table.length;seat++){
                     Player player = table[seat];
                     //skip empty seats, empty hands, or hands with no wagers.
@@ -190,7 +191,7 @@ class Table {
                 }
                 //read from the player
                 String in = decisions[seat];
-                char decision = player.readString().charAt(0);
+                char decision = in.charAt(0);
                 if(in.length() > 2){
                     in = in.substring(2);
                 }
@@ -291,7 +292,13 @@ class Table {
      */
     public void playSeat(int seat){
         //if there is no hand here or the player isnt active, return
-        if(hands[seat] == null || hands[seat].isEmpty() || !table[seat].isActive()){
+        if(hands[seat] == null || hands[seat].isEmpty()){
+            return;
+        }
+        
+        //if the player is not active, then remove him from the game.
+        if(!table[seat].isActive()){
+            leaveSeat(seat);
             return;
         }
         
@@ -328,7 +335,12 @@ class Table {
                 do{
                     in = player.readString();
                     //TODO: add delay to not waste CPU.
-                }while(in == null || in.isEmpty());
+                }while((in == null || in.isEmpty()) && player.isActive());
+                //see if the player is still active, if not, remove him.
+                if(!player.isActive()){
+                    leaveSeat(seat);
+                    return;
+                }
                 char option = in.charAt(0);
                 if(in.length() > 2){
                     in = in.substring(2);
@@ -516,18 +528,38 @@ class Table {
     }
     
     /**
+     * This method removes all players that are not active from the table
+     */
+    public void removeDisconnected(){
+        for(int seat = 0;seat<table.length;seat++){
+            if(table[seat] != null && !table[seat].isActive()){
+                leaveSeat(seat);
+                return;
+            }
+        }
+    }
+    
+    /**
      * This method opens a seat on the table
      * @param client the client to leave
-     * @return The player that was cleared.
      */
     public void leaveSeat(Client client){
         for(int seat = 0;seat<table.length;seat++){
             if(table[seat] != null && table[seat].getClient() == client){
-                table[seat] = null;
-                hands[seat] = null;
-                break;
+                leaveSeat(seat);
+                return;
             }
         }
+    }
+    
+    /**
+     * This method opens a seat on the table
+     * @param seat the seat to empty
+     */
+    public void leaveSeat(int seat){
+        clearHands(seat);
+        table[seat] = null;
+        hands[seat] = null;
     }
     
     /**
