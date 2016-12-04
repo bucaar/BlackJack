@@ -12,6 +12,10 @@ class Table extends JApplet{
     private ArrayList<Hand>[] hands;
     private Hand dealer;
     private Deck shoe;
+    private boolean hideDealer;
+    
+    private int cardWidth = 150;
+    private int cardHeight = 275;
 
     /**
      * The constructor for a table.
@@ -25,14 +29,14 @@ class Table extends JApplet{
         shoe = new Deck(decks);
         shoe.shuffle();
         
-        //update it 10 times/second
-        Timer t = new Timer(100, new ActionListener(){
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                repaint();
-            }
-        });
-        t.start();
+//        //update it 10 times/second
+//        Timer t = new Timer(100, new ActionListener(){
+//            @Override
+//            public void actionPerformed(ActionEvent e) {
+//                repaint();
+//            }
+//        });
+//        t.start();
     }
     
     /**
@@ -125,6 +129,8 @@ class Table extends JApplet{
      * The table must be cleared before calling
      */
     public void dealTable(){
+        //default to hide the dealer
+        hideDealer = true;
         //does the deck need a shuffle?
         if(shoe.needsShuffle()){
             shoe.shuffle();
@@ -137,11 +143,15 @@ class Table extends JApplet{
                     //deal them a card.
                     Card dealt = shoe.deal();
                     hands[s].get(0).addCard(dealt);
+                    repaint();
+                    pause(500);
                 }
             }
             //deal the dealer a card.
             Card dealt = shoe.deal();
             dealer.addCard(dealt);
+            repaint();
+            pause(1000);
         }
     }
     
@@ -258,6 +268,10 @@ class Table extends JApplet{
         
         //if we haven't returned yet, we should check his hand for a 21.
         if(dealer.getValue() == 21){
+            //no need to hide
+            hideDealer = false;
+            repaint();
+            pause(1000);
             //tell players dealer has blackjack
             broadcastToTable("D");
             for(int seat=0;seat<table.length;seat++){
@@ -341,6 +355,7 @@ class Table extends JApplet{
                 //deal a card if they only have one card (happens from splitting cards)
                 if(hand.size() == 1){
                     hand.addCard(shoe.deal());
+                    repaint();
                 }
                 System.out.println("\n");
                 System.out.println(tableAsString(true));
@@ -369,6 +384,7 @@ class Table extends JApplet{
                 if(option == 'H'){
                     hand.addCard(shoe.deal());
                     player.writeString("Y You received a card");
+                    repaint();
                 }
                 //player stays
                 else if(option == 'T'){
@@ -394,6 +410,7 @@ class Table extends JApplet{
                         player.takeMoney(amount);
                         hand.setWager(hand.getWager() + amount);
                         hand.addCard(shoe.deal());
+                        repaint();
                         player.writeString("Y you double down for (" + amount + ").");
                         break;
                     }
@@ -451,10 +468,15 @@ class Table extends JApplet{
      */
     public boolean playDealer(){
         //dealer will hit to a hard 17
+        hideDealer = false;
+        repaint();
+        pause(1000);
         while(dealer.getValue() < 17 || 
                 (dealer.getValue() == 17 && dealer.isSoft())){
             //the dealer needs to hit.
             dealer.addCard(shoe.deal());
+            repaint();
+            pause(500);
         }
         System.out.println("\n");
         System.out.println(tableAsString(false));
@@ -624,20 +646,54 @@ class Table extends JApplet{
     public void paint(Graphics g){
         //super.paint(g);
         //background
-        g.setColor(Color.GREEN);
+        g.setColor(new Color(30,160,70));
         g.fillRect(0, 0, getWidth(), getHeight());
         
         //dealer's hand
         g.setColor(Color.BLACK);
-        Iterator<Card> cards = dealer.iterator();
+        Iterator<Card> dealersCards = dealer.iterator();
         int card = 0;
-        while(cards.hasNext()){
-            Card c = cards.next();
-            g.drawString(c.toString(), getWidth()/2 - 30*card, 100);
+        while(dealersCards.hasNext()){
+            Card c = dealersCards.next();
+            g.drawImage(c.getImage(), getWidth()/2 - (cardWidth+10) * card, 100, cardWidth, cardHeight, this);
             card++;
+            if(hideDealer){
+                break;
+            }
         }
         //player's hands
-        
+        for(int seat=0;seat<table.length;seat++){
+            //skip the players that do not have hands.
+            if(table[seat] == null || hands[seat].isEmpty()){
+                continue;
+            }
+            
+            int hand = 0;
+            for(Hand h : hands[seat]){
+                Iterator<Card> playersCards = h.iterator();
+                card = 0;
+                while(playersCards.hasNext()){
+                    Card c = playersCards.next();
+                    g.drawImage(c.getImage(), 
+                            getWidth()/(table.length+1)*seat + hand*(cardWidth+10) + card*(cardWidth/4) + getWidth()/(table.length+1), 
+                            getHeight() - cardHeight - 10 - 50*card, 
+                            cardWidth, 
+                            cardHeight, 
+                            null);
+                    card++;
+                }
+                hand++;
+            }
+        }
+    }
+    
+    public void pause(int millis){
+        try{
+            Thread.sleep(millis);
+        }
+        catch(InterruptedException e){
+            
+        }
     }
     
     /**
