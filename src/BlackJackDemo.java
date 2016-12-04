@@ -208,6 +208,7 @@ public class BlackJackDemo extends JFrame{
                             //couldn't wager.
                             else{
                                 player.writeString("N Wager of " + wager + " could not be placed.");
+                                player.writeString("T");
                             }
                         }
                         //this shouldn't happen.
