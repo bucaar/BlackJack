@@ -1,6 +1,13 @@
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Iterator;
+import javax.swing.JApplet;
+import javax.swing.Timer;
 
-class Table {
+class Table extends JApplet{
     private Player[] table;
     private ArrayList<Hand>[] hands;
     private Hand dealer;
@@ -17,6 +24,15 @@ class Table {
         dealer = new Hand();
         shoe = new Deck(decks);
         shoe.shuffle();
+        
+        //update it 10 times/second
+        Timer t = new Timer(100, new ActionListener(){
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                repaint();
+            }
+        });
+        t.start();
     }
     
     /**
@@ -603,6 +619,25 @@ class Table {
             }
         }
         return out;
+    }
+    
+    public void paint(Graphics g){
+        //super.paint(g);
+        //background
+        g.setColor(Color.GREEN);
+        g.fillRect(0, 0, getWidth(), getHeight());
+        
+        //dealer's hand
+        g.setColor(Color.BLACK);
+        Iterator<Card> cards = dealer.iterator();
+        int card = 0;
+        while(cards.hasNext()){
+            Card c = cards.next();
+            g.drawString(c.toString(), getWidth()/2 - 30*card, 100);
+            card++;
+        }
+        //player's hands
+        
     }
     
     /**

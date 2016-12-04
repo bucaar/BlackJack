@@ -1,7 +1,8 @@
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
-class Hand {
+class Hand implements Iterable<Card>{
     private ArrayList<Card> cards;
     private boolean containsAce;
     private boolean soft;
@@ -135,5 +136,24 @@ class Hand {
      */
     public String toString(){
         return "$" + wager + " " + cards.toString() + " = " + getValue();
+    }
+
+    @Override
+    public Iterator<Card> iterator() {
+        return new HandIterator();
+    }
+    
+    private class HandIterator implements Iterator<Card>{
+        private int position = 0;
+        
+        @Override
+        public boolean hasNext() {
+            return position < cards.size();
+        }
+
+        @Override
+        public Card next() {
+            return cards.get(position++);
+        }
     }
 }

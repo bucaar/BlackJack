@@ -1,5 +1,7 @@
 
+import java.awt.Dimension;
 import java.util.ArrayList;
+import javax.swing.JFrame;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -12,7 +14,7 @@ import java.util.ArrayList;
  *
  * @author Aaron
  */
-public class BlackJackDemo {
+public class BlackJackDemo extends JFrame{
     public static final char EOL = '\n';
     
     private Server server;
@@ -30,6 +32,13 @@ public class BlackJackDemo {
         this.server = new Server(4949);
         this.table = new Table(3, 6);
         this.lobby = new ArrayList<>();
+        
+        setTitle("Blackjack");
+        setPreferredSize(new Dimension(800, 800));
+        add(table);
+        pack();
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setVisible(true);
     }
     
     public void start(){
