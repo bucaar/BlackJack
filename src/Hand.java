@@ -94,6 +94,21 @@ class Hand implements Iterable<Card>{
 
         return value;
     }
+    
+    /**
+     * 
+     * @return The value of the dealers first card A = 11
+     */
+    public int getDealerValue(){
+        if(cards.isEmpty()) 
+            return 0;
+        int value = cards.get(0).getValue();
+        if(value == 1){
+            value += 10;
+        }
+        
+        return value;
+    }
 
     /**
      * Sets the wager of this hand
