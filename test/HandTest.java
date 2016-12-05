@@ -43,7 +43,7 @@ public class HandTest {
     public void testAddAndRemoveFirstCard() {
         System.out.println("removeTopCard");
         Hand hand = new Hand();
-        Card c = new Card("K", "H");
+        Card c = new Card("K", "H", null);
         hand.addCard(c);
         Card expResult = c;
         Card result = hand.removeFirstCard();
@@ -57,8 +57,8 @@ public class HandTest {
     public void testDoesContainAce() {
         System.out.println("doesContainAce");
         Hand hand = new Hand();
-        Card c = new Card("K", "H");
-        Card a = new Card("A", "D");
+        Card c = new Card("K", "H", null);
+        Card a = new Card("A", "D", null);
         assertEquals(false, hand.doesContainAce());
         hand.addCard(c);
         assertEquals(false, hand.doesContainAce());
@@ -73,8 +73,8 @@ public class HandTest {
     public void testIsFirstAce() {
         System.out.println("isFirstAce");
         Hand hand = new Hand();
-        Card c = new Card("K", "H");
-        Card a = new Card("A", "D");
+        Card c = new Card("K", "H", null);
+        Card a = new Card("A", "D", null);
         hand.addCard(c);
         assertEquals(false, hand.isFirstAce());
         hand.addCard(a);
@@ -93,9 +93,9 @@ public class HandTest {
     public void testGetValue() {
         System.out.println("getValue");
         Hand hand = new Hand();
-        Card c = new Card("K", "H");
-        Card a = new Card("A", "D");
-        Card o = new Card("2", "S");
+        Card c = new Card("K", "H", null);
+        Card a = new Card("A", "D", null);
+        Card o = new Card("2", "S", null);
         assertEquals(0, hand.getValue());
         hand.addCard(c);
         assertEquals(10, hand.getValue());

@@ -31,8 +31,8 @@ public class CardTest {
     
     @Before
     public void setUp() {
-        jackOfHearts = new Card("J", "H");
-        aceOfSpades = new Card("A", "S");
+        jackOfHearts = new Card("J", "H", null);
+        aceOfSpades = new Card("A", "S", null);
     }
     
     @After
