@@ -15,11 +15,14 @@ class Table extends JApplet{
     private Hand dealer;
     private Deck shoe;
     private boolean hideDealer;
+    private boolean playing = false;
     
     private int cardWidth = 150;
     private int cardHeight = 275;
+    private int dieOffset = 0;
     
     private BufferedImage back;
+    private BufferedImage bjStar;
 
     /**
      * The constructor for a table.
@@ -34,7 +37,8 @@ class Table extends JApplet{
         shoe.shuffle();
         
         try{
-            back = ImageIO.read(new File("C:\\Users\\Aaron\\Documents\\NetBeansProjects\\BlackJackDemo\\src\\images\\back.png"));
+            back = ImageIO.read(new File("src\\images\\back.png"));
+            bjStar = ImageIO.read(new File("src\\images\\bjStar.png"));
         }
         catch(IOException e){}
     }
@@ -111,6 +115,11 @@ class Table extends JApplet{
      * @return whether or not every sat player has a wager
      */
     public boolean readyToDeal(){
+        //if the game is playing, then we are not ready.
+        if(playing){
+            return false;
+        }
+        
         boolean ready = true;
         boolean anyone = false;
         for(int seat=0;seat<table.length;seat++){
@@ -133,6 +142,8 @@ class Table extends JApplet{
      * The table must be cleared before calling
      */
     public void dealTable(){
+        //log that the game is going on. this prevents two games from being dealt at once.
+        playing = true;
         //default to hide the dealer
         hideDealer = true;
         //does the deck need a shuffle?
@@ -225,10 +236,13 @@ class Table extends JApplet{
                 if(in.length() > 2){
                     in = in.substring(2);
                 }
+                else{
+                    in = "";
+                }
                 //if they've accepted even money
                 if(decision == 'E'){
                     //they must have a blackjack for this.
-                    if(hands[seat].get(0).getWager() == 21){
+                    if(hands[seat].get(0).getValue() == 21){
                         //pay even money, discard hand.
                         player.giveMoney((int)(hands[seat].get(0).getWager() * 2));
                         clearHands(seat);
@@ -241,20 +255,26 @@ class Table extends JApplet{
                 }
                 //if theyve acccepted insurance
                 else if(decision == 'I'){
+                    int wager = hands[seat].get(0).getWager();
+                    int amount = wager / 2;
                     try{
                         //see how much they gave
-                        int amount = Integer.parseInt(in);
-                        int wager = hands[seat].get(0).getWager();
+                        amount = Integer.parseInt(in);
                         if(amount > wager / 2){
                             amount = wager / 2;
                             player.writeString("N Cannot buy that much insurance. Limit is 1/2 wager.");
                         }
+                    }
+                    catch(NumberFormatException e){
+                        player.writeString("N You provided an invalid wager format (" + in + ").");
+                    }
+                    if(amount > 0){
                         insurance[seat] = amount;
                         player.takeMoney(amount);
                         player.writeString("Y Insurance bought for " + amount);
                     }
-                    catch(NumberFormatException e){
-                        player.writeString("N You provided an invalid wager format (" + in + ").");
+                    else{
+                        player.writeString("Y Insurance declined.");
                     }
                 }
                 //or they declined
@@ -272,12 +292,12 @@ class Table extends JApplet{
         
         //if we haven't returned yet, we should check his hand for a 21.
         if(dealer.getValue() == 21){
+            //tell players dealer has blackjack
+            broadcastToTable("D");
             //no need to hide
             hideDealer = false;
             repaint();
             pause(1000);
-            //tell players dealer has blackjack
-            broadcastToTable("D");
             for(int seat=0;seat<table.length;seat++){
                 Player player = table[seat];
                 //skip empty seats, empty hands, or hands with no wagers.
@@ -288,7 +308,7 @@ class Table extends JApplet{
                 //if the player bought insurance
                 if(insurance[seat] > 0){
                     //pay him
-                    player.giveMoney(insurance[seat] * 2);
+                    player.giveMoney(insurance[seat] * 3);
                     player.writeString("Y Insurance paid!");
                 }
             }
@@ -350,6 +370,13 @@ class Table extends JApplet{
                 player.writeString("B");
                 //pay out the black jack 3:2
                 player.giveMoney((int)(hand.getWager() * 2.5));
+                hands[seat].get(h).die();
+                int now = hands[seat].size();
+                while(hands[seat].size() == now){
+                    repaint();
+                    pause(100);
+                }
+                dieOffset = 0;
                 clearHands(seat);
                 return;
             }
@@ -461,9 +488,19 @@ class Table extends JApplet{
             }
             //check to see if they busted.
             if(hand.getValue() > 21){
+                //make sure they see what happened.
+                pause(1000);
                 //they lose this hand and make sure we do not skip their next hand after deleting
-                hands[seat].remove(h);
+                //hands[seat].remove(h);
+                //h--;
+                hands[seat].get(h).die();
+                int now = hands[seat].size();
+                while(hands[seat].size() == now){
+                    repaint();
+                    pause(100);
+                }
                 h--;
+                dieOffset = 0;
                 player.writeString("O");
             }
             
@@ -515,9 +552,6 @@ class Table extends JApplet{
                     //did the player bust?
                     if(hand.getValue() > 21){
                         //do not pay.
-                        System.out.println("THIS SHOULDNT HAPPEN: Player bust");
-                        //make fun of Aaron.
-                        player.writeString("N The programmer is a horrible person for making this message show up.");
                     }
                     //did the dealer bust?
                     else if(dealer.getValue() > 21){
@@ -550,9 +584,13 @@ class Table extends JApplet{
     
     /**
      * This method clears the dealers hand
+     * This should be called after clearHands()
      */
     public void clearHand(){
+        playing = false;
         dealer = new Hand();
+        repaint();
+        pause(1000);
     }
     
     /**
@@ -564,6 +602,8 @@ class Table extends JApplet{
                 clearHands(seat);
             }
         }
+        repaint();
+        pause(1000);
     }
     
     /**
@@ -685,10 +725,12 @@ class Table extends JApplet{
         //dealer's value
         String dealerValue = "[" + (hideDealer?dealer.getDealerValue():dealer.getValue()) + "]";
         g.drawString(dealerValue, getWidth()/2 - g.getFontMetrics().stringWidth(dealerValue)/2, g.getFont().getSize());
+        
+
         //player's info
         for(int seat=0;seat<table.length;seat++){
             //skip the players that do not have hands.
-            if(table[seat] == null || hands[seat].isEmpty()){
+            if(table[seat] == null){
                 continue;
             }
             
@@ -697,11 +739,22 @@ class Table extends JApplet{
             g.drawString(table[seat].getUsername() + " ($" + table[seat].getMoney() + ")", 
                     getWidth()/(table.length)*seat, 
                     getHeight() - 10 - (g.getFont().getSize()+3)*2);
-            int hand = 0;
-            for(Hand h : hands[seat]){
+            
+            for(int hand = 0; hand < hands[seat].size(); hand++){
+                Hand h = hands[seat].get(hand);
+                //crude animation for busting or blackjacks
+                if(!h.isAlive()){
+                    dieOffset += cardHeight*3/4;
+                    if(dieOffset > getHeight()){
+                        hands[seat].remove(h);
+                        hand--;
+                        continue;
+                    }
+                }
+                
                 Iterator<Card> playersCards = h.iterator();
                 card = 0;
-                //draw the wager for this hand
+                //draw the wager and total for this hand
                 g.setColor(Color.BLACK);
                 g.drawString("$" + h.getWager() + " [" + h.getValue() + "]", 
                         getWidth()/(table.length)*seat + hand*(cardWidth+10), 
@@ -711,13 +764,22 @@ class Table extends JApplet{
                     Card c = playersCards.next();
                     g.drawImage(c.getImage(), 
                             getWidth()/(table.length)*seat + hand*(cardWidth+10) + card*(cardWidth/4) + 10, 
-                            getHeight() - 10 - (g.getFont().getSize()+3)*3 - cardHeight - (cardHeight/4)*card, 
+                            getHeight() - 10 - (g.getFont().getSize()+3)*3 - cardHeight - (cardHeight/4)*card + (!h.isAlive()?dieOffset:0), 
                             cardWidth, 
                             cardHeight, 
                             null);
                     card++;
                 }
-                hand++;
+                //awesome blackjack star representing
+                if(hand == 0 && h.size() == 2 && h.getValue() == 21){
+                    System.out.println("BLACKJACK");
+                    g.drawImage(bjStar, 
+                            getWidth()/(table.length)*seat + hand*(cardWidth+10), 
+                            getHeight() - 10 - (g.getFont().getSize()+3)*3 - 2*cardHeight + (!h.isAlive()?dieOffset:0), 
+                            cardWidth, 
+                            cardWidth, 
+                            null);
+                }
             }
         }
     }
