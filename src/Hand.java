@@ -7,6 +7,8 @@ class Hand implements Iterable<Card>{
     private boolean containsAce;
     private boolean soft;
     private int wager;
+    
+    private boolean alive = true;
 
     /**
      * The constructor for a hand
@@ -143,6 +145,21 @@ class Hand implements Iterable<Card>{
             return "";
         }
         return "[" + cards.get(0) + "]";
+    }
+    
+    /**
+     * This method sets isAlive() to false
+     */
+    public void die(){
+        alive = false;
+    }
+    
+    /**
+     * 
+     * @return Whether or not this hand is removed
+     */
+    public boolean isAlive(){
+        return alive;
     }
     
     /**
