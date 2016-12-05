@@ -28,7 +28,7 @@ class Deck {
                 for (char s : suits.toCharArray()) {
                     if(images[c] == null){
                         try{
-                            images[c] = ImageIO.read(new File("C:\\Users\\Aaron\\Documents\\NetBeansProjects\\BlackJackDemo\\src\\images\\" + f + s + ".png"));
+                            images[c] = ImageIO.read(new File("src\\images\\" + f + s + ".png"));
                         }
                         catch(IOException e){}
                     }
