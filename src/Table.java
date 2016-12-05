@@ -1,11 +1,13 @@
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
+import javax.imageio.ImageIO;
 import javax.swing.JApplet;
-import javax.swing.Timer;
 
 class Table extends JApplet{
     private Player[] table;
@@ -16,6 +18,8 @@ class Table extends JApplet{
     
     private int cardWidth = 150;
     private int cardHeight = 275;
+    
+    private BufferedImage back;
 
     /**
      * The constructor for a table.
@@ -29,14 +33,10 @@ class Table extends JApplet{
         shoe = new Deck(decks);
         shoe.shuffle();
         
-//        //update it 10 times/second
-//        Timer t = new Timer(100, new ActionListener(){
-//            @Override
-//            public void actionPerformed(ActionEvent e) {
-//                repaint();
-//            }
-//        });
-//        t.start();
+        try{
+            back = ImageIO.read(new File("C:\\Users\\Aaron\\Documents\\NetBeansProjects\\BlackJackDemo\\src\\images\\back.png"));
+        }
+        catch(IOException e){}
     }
     
     /**
@@ -94,6 +94,10 @@ class Table extends JApplet{
         }
         //if the player does not have enough money to wager
         if(player.getMoney() < wager){
+            return false;
+        }
+        //make sure the wager is some positive number
+        if(wager <= 0){
             return false;
         }
         //otherwise, continue
@@ -354,8 +358,14 @@ class Table extends JApplet{
             while(hand.getValue() <= 21){
                 //deal a card if they only have one card (happens from splitting cards)
                 if(hand.size() == 1){
-                    hand.addCard(shoe.deal());
+                    //if the card that they have is an ace, they only get one more card.
+                    //UNLESS the dealt card is another ace.
+                    Card dealt = shoe.deal();
+                    hand.addCard(dealt);
                     repaint();
+                    if(hand.isFirstAce() && !dealt.isAce()){
+                        break;
+                    }
                 }
                 System.out.println("\n");
                 System.out.println(tableAsString(true));
@@ -434,7 +444,7 @@ class Table extends JApplet{
                     }
                     
                     //if they can split and they can afford it
-                    if(hand.canSplit() && player.getMoney() >= amount && amount <= hand.getWager()){
+                    if(hand.canSplit() && hands[seat].size() < 4 && player.getMoney() >= amount && amount <= hand.getWager()){
                         Card splitCard = hand.removeFirstCard();
                         Hand newHand = new Hand();
                         newHand.addCard(splitCard);
@@ -493,9 +503,9 @@ class Table extends JApplet{
     public void payTable(){
         //for every seat at this table
         for(int seat=0;seat<table.length;seat++){
-            //if there is a player here that has hands
+            //if there is a player here that has hands with a wager
             if(table[seat] != null && hands[seat] != null
-                    && !hands[seat].isEmpty()){
+                    && !hands[seat].isEmpty() && hands[seat].get(0).getWager() > 0){
                 //capture the player for payments
                 Player player = table[seat];
                 //for every hand at this seat
@@ -617,7 +627,12 @@ class Table extends JApplet{
     public void broadcastToTable(String message){
         for(int i=0;i<table.length;i++){
             if(table[i] != null){
-                table[i].writeString(message);
+                if(message.equals("T")){
+                    table[i].writeString(message + " " + table[i].getMoney());
+                }
+                else{
+                    table[i].writeString(message);
+                }
             }
         }
     }
@@ -644,8 +659,12 @@ class Table extends JApplet{
     }
     
     public void paint(Graphics g){
-        //super.paint(g);
+        //calculate card size based on window and how many seats there are.
+        cardWidth = (getWidth()-20-(table.length*4-1)*10) / (table.length*4);
+        cardHeight = (int)(cardWidth * 1.5);
+        
         //background
+        g.setFont(new Font("Ariel", Font.PLAIN, cardWidth/5));
         g.setColor(new Color(30,160,70));
         g.fillRect(0, 0, getWidth(), getHeight());
         
@@ -653,30 +672,46 @@ class Table extends JApplet{
         g.setColor(Color.BLACK);
         Iterator<Card> dealersCards = dealer.iterator();
         int card = 0;
+        int pad = (getWidth() - (cardWidth+10)*dealer.size() + 10) / 2;
         while(dealersCards.hasNext()){
             Card c = dealersCards.next();
-            g.drawImage(c.getImage(), getWidth()/2 - (cardWidth+10) * card, 100, cardWidth, cardHeight, this);
+            g.drawImage(c.getImage(), pad + (cardWidth+10) * card, 100, cardWidth, cardHeight, null);
             card++;
-            if(hideDealer){
+            if(hideDealer && dealer.size() == 2){
+                g.drawImage(back, pad + (cardWidth+10) * card, 100, cardWidth, cardHeight, null);
                 break;
             }
         }
-        //player's hands
+        //dealer's value
+        String dealerValue = "[" + (hideDealer?dealer.getDealerValue():dealer.getValue()) + "]";
+        g.drawString(dealerValue, getWidth()/2 - g.getFontMetrics().stringWidth(dealerValue)/2, g.getFont().getSize());
+        //player's info
         for(int seat=0;seat<table.length;seat++){
             //skip the players that do not have hands.
             if(table[seat] == null || hands[seat].isEmpty()){
                 continue;
             }
             
+            //player's username
+            g.setColor(Color.BLACK);
+            g.drawString(table[seat].getUsername() + " ($" + table[seat].getMoney() + ")", 
+                    getWidth()/(table.length)*seat, 
+                    getHeight() - 10 - (g.getFont().getSize()+3)*2);
             int hand = 0;
             for(Hand h : hands[seat]){
                 Iterator<Card> playersCards = h.iterator();
                 card = 0;
+                //draw the wager for this hand
+                g.setColor(Color.BLACK);
+                g.drawString("$" + h.getWager() + " [" + h.getValue() + "]", 
+                        getWidth()/(table.length)*seat + hand*(cardWidth+10), 
+                        getHeight() - 10 - (g.getFont().getSize()+3)*1);
+                //draw the cards in this hand
                 while(playersCards.hasNext()){
                     Card c = playersCards.next();
                     g.drawImage(c.getImage(), 
-                            getWidth()/(table.length+1)*seat + hand*(cardWidth+10) + card*(cardWidth/4) + getWidth()/(table.length+1), 
-                            getHeight() - cardHeight - 10 - 50*card, 
+                            getWidth()/(table.length)*seat + hand*(cardWidth+10) + card*(cardWidth/4) + 10, 
+                            getHeight() - 10 - (g.getFont().getSize()+3)*3 - cardHeight - (cardHeight/4)*card, 
                             cardWidth, 
                             cardHeight, 
                             null);
