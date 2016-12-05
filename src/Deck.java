@@ -9,7 +9,7 @@ class Deck {
 
     public static final String faces = "A23456789TJQK";
     public static final String suits = "DHCS";
-
+    private BufferedImage[] images = new BufferedImage[52];
     private Card[] cards;
     private int position = 0;
 
@@ -20,7 +20,7 @@ class Deck {
      */
     public Deck(int decks) {
         cards = new Card[52 * decks];
-        BufferedImage[] images = new BufferedImage[52];
+        
         int i = 0;
         for (int d = 0; d < decks; d++) {
             int c = 0;
