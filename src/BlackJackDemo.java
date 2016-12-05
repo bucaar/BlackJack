@@ -127,6 +127,7 @@ public class BlackJackDemo extends JFrame{
                     player.writeString("Y You have been added to the lobby!");
                     //display the player the seat options.
                     player.writeString("S " + table.serverSeatOptions());
+                    table.repaint();
                 }
                 break;
             }
@@ -145,7 +146,8 @@ public class BlackJackDemo extends JFrame{
                             lobby.remove(player);
                             player.writeString("Y You are now sitting at the table.");
                             //notify him to place his bet.
-                            player.writeString("T");
+                            player.writeString("T " + player.getMoney());
+                            table.repaint();
                         }
                         //we couldn't sit them.
                         else{
@@ -182,6 +184,7 @@ public class BlackJackDemo extends JFrame{
                     
                     //Update all lobby player's available seat options
                     broadcastToLobby("S " + table.serverSeatOptions());
+                    table.repaint();
                 }
                 //if they dont,
                 else{
@@ -204,11 +207,12 @@ public class BlackJackDemo extends JFrame{
                             //place the wager.
                             if(table.placeWager(player, seat, wager)){
                                 player.writeString("Y Wager of " + wager + " placed.");
+                                table.repaint();
                             }
                             //couldn't wager.
                             else{
                                 player.writeString("N Wager of " + wager + " could not be placed.");
-                                player.writeString("T");
+                                player.writeString("T " + player.getMoney());
                             }
                         }
                         //this shouldn't happen.
@@ -218,7 +222,7 @@ public class BlackJackDemo extends JFrame{
                     }
                     catch(NumberFormatException e){
                         player.writeString("N (" + message + ") is not a valid wager.");
-                        player.writeString("T");
+                        player.writeString("T " + player.getMoney());
                     }
                 }
                 //if they dont,
