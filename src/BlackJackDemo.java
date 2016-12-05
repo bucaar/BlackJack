@@ -34,7 +34,7 @@ public class BlackJackDemo extends JFrame{
         this.lobby = new ArrayList<>();
         
         setTitle("Blackjack");
-        setPreferredSize(new Dimension(800, 800));
+        setPreferredSize(new Dimension(1500, 800));
         add(table);
         pack();
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -88,8 +88,8 @@ public class BlackJackDemo extends JFrame{
                     }
                 }
                 table.payTable();
-                table.clearHand();
                 table.clearHands();
+                table.clearHand();
                 table.broadcastToTable("T");
                 System.out.println("\n");
                 System.out.println(table.tableAsString(true));
